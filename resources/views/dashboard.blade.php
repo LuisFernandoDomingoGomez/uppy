@@ -1,27 +1,47 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2 xl:grid-cols-4">
-        <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Usuarios totales</p>
-            <h2 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $totalUsers }}</h2>
+    <div class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2 xl:grid-cols-4">
+        <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Usuarios totales</p>
+            <div class="mt-4 flex items-end justify-between">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white">{{ $totalUsers }}</h2>
+                <span class="px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                    Sistema
+                </span>
+            </div>
         </div>
 
-        <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Roles registrados</p>
-            <h2 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $totalRoles }}</h2>
+        <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Roles registrados</p>
+            <div class="mt-4 flex items-end justify-between">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white">{{ $totalRoles }}</h2>
+                <span class="px-2.5 py-1 text-xs font-medium text-purple-700 bg-purple-100 rounded-full dark:bg-purple-900 dark:text-purple-300">
+                    Control
+                </span>
+            </div>
         </div>
 
-        <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Administradores</p>
-            <h2 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $adminUsers }}</h2>
+        <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Administradores</p>
+            <div class="mt-4 flex items-end justify-between">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white">{{ $adminUsers }}</h2>
+                <span class="px-2.5 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-300">
+                    Activo
+                </span>
+            </div>
         </div>
 
-        <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Tu rol</p>
-            <h2 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                {{ ucfirst(auth()->user()->roles->first()?->name ?? 'Sin rol') }}
-            </h2>
+        <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tu rol</p>
+            <div class="mt-4 flex items-end justify-between">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    {{ ucfirst(auth()->user()->roles->first()?->name ?? 'Sin rol') }}
+                </h2>
+                <span class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full dark:bg-amber-900 dark:text-amber-300">
+                    Sesión
+                </span>
+            </div>
         </div>
     </div>
 

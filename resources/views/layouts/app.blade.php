@@ -7,13 +7,13 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
-    <div class="min-h-screen">
+    <div x-data="{ sidebarOpen: false }" class="min-h-screen">
         <x-layout.sidebar />
 
-        <div class="p-4 sm:ml-64">
+        <div class="lg:ml-64">
             <x-layout.navbar />
 
-            <main class="mt-4">
+            <main class="p-4 lg:p-6">
                 @yield('content')
             </main>
         </div>
