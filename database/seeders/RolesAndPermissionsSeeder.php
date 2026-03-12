@@ -26,7 +26,9 @@ class RolesAndPermissionsSeeder extends Seeder
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $user = Role::firstOrCreate(['name' => 'user']);
 
-        $admin->givePermissionTo($permissions);
-        $user->givePermissionTo(['view dashboard']);
+        $admin->syncPermissions($permissions);
+        $user->syncPermissions([
+            'view dashboard',
+        ]);
     }
 }
