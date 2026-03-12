@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,4 +49,32 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy'])
         ->middleware('can:delete users')
         ->name('users.destroy');
+
+    Route::get('/roles', [RoleController::class, 'index'])
+        ->middleware('can:manage roles')
+        ->name('roles.index');
+
+    Route::get('/roles/create', [RoleController::class, 'create'])
+        ->middleware('can:manage roles')
+        ->name('roles.create');
+
+    Route::post('/roles', [RoleController::class, 'store'])
+        ->middleware('can:manage roles')
+        ->name('roles.store');
+
+    Route::get('/roles/{role}', [RoleController::class, 'show'])
+        ->middleware('can:manage roles')
+        ->name('roles.show');
+
+    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])
+        ->middleware('can:manage roles')
+        ->name('roles.edit');
+
+    Route::put('/roles/{role}', [RoleController::class, 'update'])
+        ->middleware('can:manage roles')
+        ->name('roles.update');
+
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
+        ->middleware('can:manage roles')
+        ->name('roles.destroy');
 });

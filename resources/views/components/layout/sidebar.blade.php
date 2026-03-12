@@ -50,11 +50,13 @@
 
             @can('manage roles')
                 <li>
-                    <a href="#"
-                       class="flex items-center p-2 rounded-lg group transition
-                       {{ request()->is('roles*') ? 'bg-blue-600 text-white' : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                    <a href="{{ route('roles.index') }}"
+                    class="flex items-center p-2 rounded-lg group transition
+                    {{ request()->routeIs('roles.*')
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 transition duration-75
-                            {{ request()->is('roles*')
+                            {{ request()->routeIs('roles.*')
                                 ? 'text-white'
                                 : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white' }}"
                             fill="currentColor" viewBox="0 0 20 20">
