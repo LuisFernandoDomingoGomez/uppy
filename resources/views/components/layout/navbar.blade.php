@@ -5,16 +5,26 @@
                 Panel principal
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Bienvenido al sistema
+                Bienvenido, {{ auth()->user()?->name }}
             </p>
         </div>
 
         <div class="flex items-center gap-3">
             <button id="userMenuButton" data-dropdown-toggle="userDropdown"
-                class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                 type="button">
-                <span class="sr-only">Abrir menú de usuario</span>
-                <div class="w-8 h-8 rounded-full bg-gray-300"></div>
+                <div class="flex items-center justify-center w-10 h-10 text-sm font-bold text-white bg-blue-600 rounded-full">
+                    {{ strtoupper(substr(auth()->user()?->name ?? 'U', 0, 1)) }}
+                </div>
+
+                <div class="hidden text-left sm:block">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ auth()->user()?->name }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ ucfirst(auth()->user()?->roles->first()?->name ?? 'Sin rol') }}
+                    </p>
+                </div>
             </button>
 
             <div id="userDropdown"
