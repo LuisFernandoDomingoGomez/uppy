@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardWizardController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -22,11 +22,12 @@ Route::middleware('auth')->group(function () {
 
     // Perfil
     Route::get('/profile', [ProfileController::class, 'edit'])
-    ->name('profile.edit');
+        ->name('profile.edit');
 
     Route::put('/profile', [ProfileController::class, 'update'])
         ->name('profile.update');
 
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware('can:view dashboard')
         ->name('dashboard');
@@ -108,4 +109,7 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/cards/{card}/publish', [CardWizardController::class, 'publish'])->name('cards.publish');
     Route::patch('/cards/{card}/pause', [CardWizardController::class, 'pause'])->name('cards.pause');
+
+    Route::patch('/cards/{card}/autosave', [CardWizardController::class, 'autosave'])
+        ->name('cards.autosave');
 });
