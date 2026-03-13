@@ -22,6 +22,20 @@
             </p>
 
             <ul class="space-y-2 font-medium">
+                    <li>
+                        <a href="{{ route('cards.index') }}"
+                        class="flex items-center gap-3 px-3 py-3 rounded-xl transition
+                        {{ request()->routeIs('cards.*')
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                            <svg class="w-5 h-5 {{ request()->routeIs('cards.*') ? 'text-white' : 'text-gray-500 dark:text-gray-400' }}"
+                                fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M4 5a2 2 0 0 1 2-2h2.172a2 2 0 0 0 1.414-.586l.828-.828A2 2 0 0 1 11.828 1H14a2 2 0 0 1 2 2v2.172a2 2 0 0 0 .586 1.414l.828.828A2 2 0 0 1 18 8.828V11a2 2 0 0 1-2 2h-2.172a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 10.172 15H8a2 2 0 0 1-2-2v-2.172a2 2 0 0 0-.586-1.414l-.828-.828A2 2 0 0 1 4 8.172V5Z"/>
+                            </svg>
+                            <span>Tarjetas</span>
+                        </a>
+                    </li>
+
                 @can('view dashboard')
                     <li>
                         <a href="{{ route('dashboard') }}"

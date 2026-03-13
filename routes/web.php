@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
+    // Perfil
     Route::get('/profile', [ProfileController::class, 'edit'])
     ->name('profile.edit');
 
@@ -30,6 +32,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    // Usuarios
     Route::get('/users', [UserController::class, 'index'])
         ->middleware('can:view users')
         ->name('users.index');
@@ -58,6 +61,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:delete users')
         ->name('users.destroy');
 
+    // Roles
     Route::get('/roles', [RoleController::class, 'index'])
         ->middleware('can:manage roles')
         ->name('roles.index');
@@ -85,4 +89,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
         ->middleware('can:manage roles')
         ->name('roles.destroy');
+
+    // Cards
+    Route::get('/cards', [CardController::class, 'index'])
+        ->name('cards.index');
+
+    Route::get('/cards/create', [CardController::class, 'create'])
+        ->name('cards.create');
+
+    Route::post('/cards/store-draft', [CardController::class, 'storeDraft'])
+        ->name('cards.store-draft');
+
+    Route::get('/cards/{card}/edit', [CardController::class, 'edit'])
+        ->name('cards.edit');
 });
