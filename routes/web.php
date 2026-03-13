@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -16,6 +17,13 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/profile', [ProfileController::class, 'edit'])
+    ->name('profile.edit');
+
+    Route::put('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware('can:view dashboard')
         ->name('dashboard');
