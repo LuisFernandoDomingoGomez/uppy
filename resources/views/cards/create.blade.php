@@ -14,7 +14,7 @@
 
             <div class="p-6 space-y-4">
                 @foreach($cardTypes as $type)
-                    <form action="{{ route('cards.store-draft') }}" method="POST">
+                    <form action="{{ route('cards.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="card_type_id" value="{{ $type->id }}">
 

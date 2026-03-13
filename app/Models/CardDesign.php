@@ -10,6 +10,9 @@ class CardDesign extends Model
     protected $fillable = [
         'card_id',
         'main_image_path',
+        'logo_horizontal_path',
+        'logo_square_path',
+        'preview_platform',
         'stamp_active_icon_type',
         'stamp_active_icon_value',
         'stamp_inactive_icon_type',

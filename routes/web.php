@@ -6,6 +6,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\CardWizardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -91,15 +92,20 @@ Route::middleware('auth')->group(function () {
         ->name('roles.destroy');
 
     // Cards
-    Route::get('/cards', [CardController::class, 'index'])
-        ->name('cards.index');
+    Route::resource('cards', CardController::class)->except(['destroy', 'update']);
 
-    Route::get('/cards/create', [CardController::class, 'create'])
-        ->name('cards.create');
+    Route::get('/cards/{card}/wizard/step-1', [CardWizardController::class, 'step1'])->name('cards.wizard.step1');
+    Route::put('/cards/{card}/wizard/step-1', [CardWizardController::class, 'saveStep1'])->name('cards.wizard.step1.save');
 
-    Route::post('/cards/store-draft', [CardController::class, 'storeDraft'])
-        ->name('cards.store-draft');
+    Route::get('/cards/{card}/wizard/step-2', [CardWizardController::class, 'step2'])->name('cards.wizard.step2');
+    Route::put('/cards/{card}/wizard/step-2', [CardWizardController::class, 'saveStep2'])->name('cards.wizard.step2.save');
 
-    Route::get('/cards/{card}/edit', [CardController::class, 'edit'])
-        ->name('cards.edit');
+    Route::get('/cards/{card}/wizard/step-3', [CardWizardController::class, 'step3'])->name('cards.wizard.step3');
+    Route::put('/cards/{card}/wizard/step-3', [CardWizardController::class, 'saveStep3'])->name('cards.wizard.step3.save');
+
+    Route::get('/cards/{card}/wizard/step-4', [CardWizardController::class, 'step4'])->name('cards.wizard.step4');
+    Route::put('/cards/{card}/wizard/step-4', [CardWizardController::class, 'saveStep4'])->name('cards.wizard.step4.save');
+
+    Route::patch('/cards/{card}/publish', [CardWizardController::class, 'publish'])->name('cards.publish');
+    Route::patch('/cards/{card}/pause', [CardWizardController::class, 'pause'])->name('cards.pause');
 });
