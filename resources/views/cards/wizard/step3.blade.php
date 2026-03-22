@@ -2,6 +2,8 @@
 
 @section('content')
     @php
+        use App\Support\CardPreviewCode;
+
         $displayName = old('display_name', $card->settings_json['display_name'] ?? $card->name);
         $terms = old('terms', $card->terms);
 
@@ -35,15 +37,32 @@
         }
 
         $design = $card->design;
+
         $logoHorizontalUrl = $design?->logo_horizontal_path ? asset('storage/' . $design->logo_horizontal_path) : null;
         $logoSquareUrl = $design?->logo_square_path ? asset('storage/' . $design->logo_square_path) : null;
         $mainImageUrl = $design?->main_image_path ? asset('storage/' . $design->main_image_path) : null;
+        $stampActiveImageUrl = $design?->stamp_active_image_path ? asset('storage/' . $design->stamp_active_image_path) : null;
+        $stampInactiveImageUrl = $design?->stamp_inactive_image_path ? asset('storage/' . $design->stamp_inactive_image_path) : null;
+
         $backgroundColor = $design?->background_color ?? '#F3F4F6';
+        $activeColor = $design?->active_color ?? '#2563EB';
+        $inactiveColor = $design?->inactive_color ?? '#D1D5DB';
         $textColor = $design?->text_color ?? '#111827';
+
+        $codeType = $card->code_type ?? 'qr';
+
+        $qrDataUri = CardPreviewCode::qrDataUri($card->id);
+        $barcodeDataUri = CardPreviewCode::barcodeDataUri($card->id);
+        $barcodeLabel = CardPreviewCode::barcodeLabel($card->id);
+
+        $supportsStamps = $card->type->code === 'stamps';
+
+        $stampsRequired = (int) ($card->config('stamps.required', 10) ?? 10);
+        $stampsOnSignup = (int) ($card->config('stamps.on_signup', 0) ?? 0);
     @endphp
 
     <div
-        class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
+        class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_390px]"
         x-data="{
             autosave: null,
             previewPlatform: localStorage.getItem('uppy_preview_platform') || 'ios',
@@ -54,6 +73,20 @@
                 links: @js($links),
                 sections: @js($sections),
             },
+
+            design: {
+                background_color: @js($backgroundColor),
+                active_color: @js($activeColor),
+                inactive_color: @js($inactiveColor),
+                text_color: @js($textColor),
+                code_type: @js($codeType),
+            },
+
+            logoHorizontalUrl: @js($logoHorizontalUrl),
+            logoSquareUrl: @js($logoSquareUrl),
+            mainImageUrl: @js($mainImageUrl),
+            stampActiveImageUrl: @js($stampActiveImageUrl),
+            stampInactiveImageUrl: @js($stampInactiveImageUrl),
 
             init() {
                 this.autosave = window.uppyAutosave({
@@ -112,12 +145,28 @@
 
             previewLabel(link) {
                 return link.label && link.label.trim() !== '' ? link.label : (link.value || 'Sin texto');
+            },
+
+            setPreview(platform) {
+                this.previewPlatform = platform;
+                localStorage.setItem('uppy_preview_platform', platform);
+            },
+
+            visibleSections() {
+                return this.form.sections
+                    .filter(section => (section.title && section.title.trim() !== '') || (section.content && section.content.trim() !== ''))
+                    .slice(0, 2);
+            },
+
+            visibleLinks() {
+                return this.form.links
+                    .filter(link => (link.value && link.value.trim() !== '') || (link.label && link.label.trim() !== ''))
+                    .slice(0, 3);
             }
         }"
     >
         {{-- Panel principal --}}
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            {{-- Header --}}
             <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-gray-200">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900">Editar tarjeta</h2>
@@ -131,14 +180,12 @@
                 </span>
             </div>
 
-            {{-- Indicador autosave --}}
             <div class="px-6 pt-3">
                 <div id="autosave-indicator" class="text-xs text-gray-400">
                     Guardado
                 </div>
             </div>
 
-            {{-- Tabs --}}
             <div class="px-6 pt-4 pb-3 border-b border-gray-200">
                 <div class="grid grid-cols-4 gap-2 text-xs sm:text-sm">
                     <a href="{{ route('cards.wizard.step1', $card) }}"
@@ -347,124 +394,324 @@
             </div>
         </div>
 
-        {{-- Preview lateral --}}
+        {{-- Preview lateral tipo teléfono --}}
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
             <h3 class="text-sm font-semibold text-gray-900">Vista previa</h3>
-            <p class="mt-1 text-xs text-gray-500">Detalle reactivo de la tarjeta.</p>
+            <p class="mt-1 text-xs text-gray-500">Simulación visual por dispositivo.</p>
 
             <div class="mt-5 flex justify-center">
-                {{-- iOS --}}
                 <template x-if="previewPlatform === 'ios'">
-                    <div class="w-64 rounded-[2rem] border-8 border-gray-900 p-4 shadow-2xl"
-                         style="background: linear-gradient(180deg, {{ $backgroundColor }} 0%, #f3f4f6 100%)">
-                        <div class="mx-auto mb-4 h-6 w-24 rounded-full bg-gray-900"></div>
+                    <div class="relative w-[276px] rounded-[2.7rem] border-[7px] border-[#111111] bg-[#111111] p-[8px] shadow-[0_20px_45px_rgba(0,0,0,0.22)]">
+                        <div class="absolute left-1/2 top-[10px] z-20 -translate-x-1/2 w-[74px] h-[19px] rounded-full bg-black shadow-inner"></div>
 
-                        <div class="rounded-[1.4rem] bg-white p-4 shadow-lg min-h-[390px] border border-gray-100"
-                             style="color: {{ $textColor }}">
+                        <div class="rounded-[2.15rem] overflow-hidden min-h-[560px] bg-[#f3f2f8] p-3 pt-9">
+                            <div class="px-2">
+                                <div
+                                    class="rounded-[1.7rem] overflow-hidden border border-white/80 shadow-[0_18px_34px_rgba(0,0,0,0.16)]"
+                                    :style="`background: linear-gradient(180deg, ${design.background_color} 0%, #ffffff 86%); color:${design.text_color}`"
+                                >
+                                    <div class="px-4 pt-4 pb-4">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <template x-if="logoHorizontalUrl">
+                                                    <img :src="logoHorizontalUrl" class="h-6 object-contain shrink-0">
+                                                </template>
 
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="flex-1">
-                                    @if($logoHorizontalUrl)
-                                        <img src="{{ $logoHorizontalUrl }}" class="h-8 object-contain mb-2" alt="">
-                                    @elseif($logoSquareUrl)
-                                        <img src="{{ $logoSquareUrl }}" class="h-9 w-9 object-cover rounded-lg mb-2" alt="">
-                                    @endif
+                                                <template x-if="!logoHorizontalUrl && logoSquareUrl">
+                                                    <img :src="logoSquareUrl" class="h-9 w-9 rounded-xl object-cover bg-white shadow-sm shrink-0">
+                                                </template>
 
-                                    <p class="text-sm font-semibold leading-tight" x-text="form.display_name || '{{ $card->name }}'"></p>
-                                </div>
+                                                <template x-if="!logoHorizontalUrl && !logoSquareUrl">
+                                                    <div class="flex items-center justify-center h-9 w-9 rounded-xl bg-white text-xs font-semibold text-gray-700 shadow-sm shrink-0">
+                                                        U
+                                                    </div>
+                                                </template>
 
-                                <div class="text-right">
-                                    <p class="text-[10px] opacity-60">Estado</p>
-                                    <p class="text-[10px]">{{ ucfirst($card->status) }}</p>
-                                </div>
-                            </div>
+                                                <div class="min-w-0">
+                                                    <p class="text-[10px] opacity-55 truncate">{{ $card->type->name }}</p>
+                                                    <p class="text-[15px] font-semibold leading-tight truncate" x-text="form.display_name || '{{ $card->name }}'"></p>
+                                                </div>
+                                            </div>
 
-                            <div class="mt-4 h-20 rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center text-sm text-gray-400">
-                                @if($mainImageUrl)
-                                    <img src="{{ $mainImageUrl }}" class="w-full h-full object-cover" alt="">
-                                @else
-                                    Imagen principal
-                                @endif
-                            </div>
+                                            <div class="text-right shrink-0">
+                                                <p class="text-[10px] opacity-45">Estado</p>
+                                                <p class="text-[10px]">{{ ucfirst($card->status) }}</p>
+                                            </div>
+                                        </div>
 
-                            <div class="mt-4 space-y-2">
-                                <template x-for="(link, index) in form.links.slice(0, 2)" :key="'ios-link-'+index">
-                                    <div class="rounded-xl bg-gray-50 px-3 py-2 border border-gray-100">
-                                        <p class="text-[10px] uppercase tracking-wide text-gray-400" x-text="link.type || 'url'"></p>
-                                        <p class="text-xs font-medium text-blue-600 truncate" x-text="previewLabel(link)"></p>
-                                    </div>
-                                </template>
-                            </div>
+                                        @unless($supportsStamps)
+                                            <div class="mt-4 h-24 rounded-[1.1rem] bg-white/70 overflow-hidden border border-white/70">
+                                                <template x-if="mainImageUrl">
+                                                    <img :src="mainImageUrl" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="!mainImageUrl">
+                                                    <div class="w-full h-full flex items-center justify-center text-sm text-gray-400">
+                                                        Imagen principal
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        @endunless
 
-                            <div class="mt-4 rounded-xl bg-gray-50 p-3 border border-gray-100">
-                                <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Términos</p>
-                                <p class="text-[11px] text-gray-600 line-clamp-4" x-text="form.terms || 'Sin términos aún.'"></p>
-                            </div>
-                        </div>
-                    </div>
-                </template>
+                                        @if($supportsStamps)
+                                            <div class="mt-4 rounded-[1.15rem] bg-white/65 border border-white/70 px-3 py-3">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <p class="text-[11px] font-medium">Sellos</p>
+                                                    <p class="text-[10px] opacity-60">{{ $stampsOnSignup }}/{{ $stampsRequired }}</p>
+                                                </div>
 
-                {{-- Android --}}
-                <template x-if="previewPlatform === 'android'">
-                    <div class="w-72 rounded-[2.2rem] border-[7px] border-slate-900 p-3 shadow-2xl bg-slate-100">
-                        <div class="mx-auto mb-3 h-5 w-20 rounded-full bg-slate-900"></div>
-
-                        <div class="rounded-[1.6rem] overflow-hidden shadow-xl bg-white min-h-[410px] border border-gray-100">
-                            <div class="px-4 pt-4 pb-3"
-                                 style="background: linear-gradient(135deg, {{ $backgroundColor }} 0%, #ffffff 100%); color: {{ $textColor }}">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-center gap-3">
-                                        @if($logoSquareUrl)
-                                            <img src="{{ $logoSquareUrl }}" class="h-10 w-10 rounded-full object-cover shadow-sm" alt="">
-                                        @elseif($logoHorizontalUrl)
-                                            <img src="{{ $logoHorizontalUrl }}" class="h-7 object-contain" alt="">
+                                                <div class="grid grid-cols-5 gap-2">
+                                                    @for($i = 1; $i <= max(5, min(10, $stampsRequired)); $i++)
+                                                        @if($i <= $stampsOnSignup)
+                                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm overflow-hidden"
+                                                                 style="background: {{ $activeColor }}; color:white;">
+                                                                @if($stampActiveImageUrl)
+                                                                    <img src="{{ $stampActiveImageUrl }}" class="w-full h-full object-cover" alt="">
+                                                                @else
+                                                                    ★
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm overflow-hidden"
+                                                                 style="background: {{ $inactiveColor }}; color: {{ $textColor }}; opacity:.88;">
+                                                                @if($stampInactiveImageUrl)
+                                                                    <img src="{{ $stampInactiveImageUrl }}" class="w-full h-full object-cover" alt="">
+                                                                @else
+                                                                    ●
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    @endfor
+                                                </div>
+                                            </div>
                                         @endif
 
-                                        <div>
-                                            <p class="text-xs opacity-70">{{ $card->type->name }}</p>
-                                            <p class="font-semibold leading-tight" x-text="form.display_name || '{{ $card->name }}'"></p>
+                                        <div class="mt-4 space-y-2">
+                                            <template x-for="(link, index) in visibleLinks()" :key="'ios-link-'+index">
+                                                <div class="rounded-xl bg-white/65 border border-white/70 px-3 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide opacity-50" x-text="link.type || 'url'"></p>
+                                                    <p class="text-[11px] font-medium text-blue-600 truncate" x-text="previewLabel(link)"></p>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="visibleLinks().length === 0">
+                                                <div class="rounded-xl bg-white/65 border border-white/70 px-3 py-2 text-[11px] opacity-50">
+                                                    Sin enlaces
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <div class="mt-4 space-y-2">
+                                            <template x-for="(section, index) in visibleSections()" :key="'ios-section-'+index">
+                                                <div class="rounded-xl bg-white/65 border border-white/70 px-3 py-2">
+                                                    <p class="text-[11px] font-semibold" x-text="section.title || 'Sección'"></p>
+                                                    <p class="mt-1 text-[10px] opacity-70 line-clamp-3" x-text="section.content || 'Sin contenido'"></p>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="visibleSections().length === 0">
+                                                <div class="rounded-xl bg-white/65 border border-white/70 px-3 py-2 text-[11px] opacity-50">
+                                                    Sin secciones
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <div class="mt-4 rounded-[1.1rem] bg-white/80 border border-white/70 p-3">
+                                            <p class="text-[10px] uppercase tracking-wide opacity-50 mb-1">Términos</p>
+                                            <p class="text-[11px] opacity-75 line-clamp-4" x-text="form.terms || 'Sin términos aún.'"></p>
+                                        </div>
+
+                                        <div class="mt-5">
+                                            <p class="text-xs opacity-60 mb-2">Código</p>
+                                            <div class="rounded-[1.1rem] bg-white/80 border border-white/70 p-4 min-h-[122px] flex flex-col items-center justify-center">
+                                                <template x-if="design.code_type === 'qr'">
+                                                    <img :src="@js($qrDataUri)" class="w-24 h-24 object-contain">
+                                                </template>
+
+                                                <template x-if="design.code_type === 'barcode'">
+                                                    <div class="w-full text-center">
+                                                        <img :src="@js($barcodeDataUri)" class="mx-auto h-14 object-contain">
+                                                        <p class="mt-2 text-[10px] tracking-widest text-gray-500">{{ $barcodeLabel }}</p>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div class="text-right text-[10px] opacity-70">
-                                        <p>Estado</p>
-                                        <p>{{ ucfirst($card->status) }}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="px-4 pb-4">
-                                <div class="mt-4 h-20 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center text-sm text-gray-400 shadow-sm">
-                                    @if($mainImageUrl)
-                                        <img src="{{ $mainImageUrl }}" class="w-full h-full object-cover" alt="">
-                                    @else
-                                        Imagen principal
-                                    @endif
-                                </div>
-
-                                <div class="mt-4 space-y-2">
-                                    <template x-for="(section, index) in form.sections.slice(0, 2)" :key="'android-section-'+index">
-                                        <div class="rounded-xl bg-gray-50 p-3 border border-gray-100">
-                                            <p class="text-xs font-semibold text-gray-800" x-text="section.title || 'Sección'"></p>
-                                            <p class="mt-1 text-[11px] text-gray-500 line-clamp-3" x-text="section.content || 'Sin contenido'"></p>
-                                        </div>
-                                    </template>
-                                </div>
-
-                                <div class="mt-4 rounded-xl bg-gray-50 p-3 border border-gray-100">
-                                    <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-2">Enlaces</p>
-
-                                    <template x-for="(link, index) in form.links.slice(0, 2)" :key="'android-link-'+index">
-                                        <div class="flex items-center justify-between gap-2 py-1">
-                                            <span class="text-[11px] text-gray-400 uppercase" x-text="link.type || 'url'"></span>
-                                            <span class="text-[11px] text-blue-600 truncate" x-text="previewLabel(link)"></span>
-                                        </div>
-                                    </template>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </template>
+
+                <template x-if="previewPlatform === 'android'">
+                    <div class="relative w-[280px] rounded-[2.45rem] border-[7px] border-[#151515] bg-[#151515] p-[8px] shadow-[0_20px_45px_rgba(0,0,0,0.22)]">
+                        <div class="absolute left-1/2 top-[11px] z-20 -translate-x-1/2 h-[10px] w-[10px] rounded-full bg-black border border-neutral-700"></div>
+
+                        <div class="rounded-[1.95rem] overflow-hidden min-h-[560px] bg-[#f6f7f8] p-3 pt-7">
+                            <div
+                                class="overflow-hidden rounded-[1.35rem] border border-gray-200 bg-white shadow-[0_10px_24px_rgba(0,0,0,0.10)]"
+                                :style="`color:${design.text_color}`"
+                            >
+                                <div
+                                    class="px-4 pt-4 pb-3"
+                                    :style="`background: linear-gradient(135deg, ${design.background_color} 0%, ${design.active_color} 100%); color: white;`"
+                                >
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <template x-if="logoSquareUrl">
+                                                <img :src="logoSquareUrl" class="h-9 w-9 rounded-full object-cover border border-white/40 shadow-sm shrink-0 bg-white">
+                                            </template>
+
+                                            <template x-if="!logoSquareUrl && logoHorizontalUrl">
+                                                <img :src="logoHorizontalUrl" class="h-6 object-contain shrink-0 brightness-[1.15]">
+                                            </template>
+
+                                            <template x-if="!logoSquareUrl && !logoHorizontalUrl">
+                                                <div class="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center text-xs font-semibold shrink-0">
+                                                    U
+                                                </div>
+                                            </template>
+
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] text-white/75 truncate">{{ $card->type->name }}</p>
+                                                <p class="text-[15px] font-semibold leading-tight truncate text-white" x-text="form.display_name || '{{ $card->name }}'"></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-right text-[10px] text-white/75 shrink-0">
+                                            <p>Estado</p>
+                                            <p>{{ ucfirst($card->status) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="px-4 py-4 bg-white">
+                                    @unless($supportsStamps)
+                                        <div class="h-20 rounded-[0.95rem] overflow-hidden bg-gray-100 flex items-center justify-center text-sm text-gray-400 border border-gray-100">
+                                            <template x-if="mainImageUrl">
+                                                <img :src="mainImageUrl" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!mainImageUrl">
+                                                <span>Imagen principal</span>
+                                            </template>
+                                        </div>
+                                    @endunless
+
+                                    @if($supportsStamps)
+                                        <div class="mt-1">
+                                            <p class="mb-2 text-[11px] font-medium text-gray-500">Progreso</p>
+                                            <div class="grid grid-cols-5 gap-2">
+                                                @for($i = 1; $i <= max(5, min(10, $stampsRequired)); $i++)
+                                                    @if($i <= $stampsOnSignup)
+                                                        <div class="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold border overflow-hidden"
+                                                             style="background: {{ $activeColor }}; color:white; border-color: {{ $activeColor }};">
+                                                            @if($stampActiveImageUrl)
+                                                                <img src="{{ $stampActiveImageUrl }}" class="w-full h-full object-cover" alt="">
+                                                            @else
+                                                                ★
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        <div class="h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold border overflow-hidden"
+                                                             style="background:white; color: {{ $inactiveColor }}; border-color: {{ $inactiveColor }};">
+                                                            @if($stampInactiveImageUrl)
+                                                                <img src="{{ $stampInactiveImageUrl }}" class="w-full h-full object-cover" alt="">
+                                                            @else
+                                                                ●
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="mt-4 space-y-2">
+                                        <template x-for="(section, index) in visibleSections()" :key="'android-section-'+index">
+                                            <div class="rounded-xl bg-gray-50 p-3 border border-gray-100">
+                                                <p class="text-xs font-semibold text-gray-800" x-text="section.title || 'Sección'"></p>
+                                                <p class="mt-1 text-[11px] text-gray-500 line-clamp-3" x-text="section.content || 'Sin contenido'"></p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="visibleSections().length === 0">
+                                            <div class="rounded-xl bg-gray-50 p-3 border border-gray-100 text-[11px] text-gray-400">
+                                                Sin secciones
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="mt-4 rounded-xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-2">Enlaces</p>
+
+                                        <template x-for="(link, index) in visibleLinks()" :key="'android-link-'+index">
+                                            <div class="flex items-center justify-between gap-2 py-1">
+                                                <span class="text-[11px] text-gray-400 uppercase" x-text="link.type || 'url'"></span>
+                                                <span class="text-[11px] text-blue-600 truncate" x-text="previewLabel(link)"></span>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="visibleLinks().length === 0">
+                                            <div class="text-[11px] text-gray-400">Sin enlaces</div>
+                                        </template>
+                                    </div>
+
+                                    <div class="mt-4 rounded-xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] uppercase tracking-wide text-gray-400 mb-2">Términos</p>
+                                        <p class="text-[11px] text-gray-500 line-clamp-4" x-text="form.terms || 'Sin términos aún.'"></p>
+                                    </div>
+
+                                    <div class="mt-5 rounded-[1rem] bg-[#f8fafc] p-4 border border-gray-200">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <p class="text-xs font-medium text-gray-500">Código</p>
+                                            <div class="h-1.5 w-10 rounded-full" :style="`background:${design.active_color}`"></div>
+                                        </div>
+
+                                        <template x-if="design.code_type === 'qr'">
+                                            <div class="flex justify-center">
+                                                <img :src="@js($qrDataUri)" class="w-24 h-24 object-contain">
+                                            </div>
+                                        </template>
+
+                                        <template x-if="design.code_type === 'barcode'">
+                                            <div class="text-center">
+                                                <img :src="@js($barcodeDataUri)" class="mx-auto h-14 object-contain">
+                                                <p class="mt-2 text-[10px] tracking-widest text-gray-500">{{ $barcodeLabel }}</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="mt-4 space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        @click="setPreview('ios')"
+                        :class="previewPlatform === 'ios'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-300 bg-white text-gray-700'"
+                        class="flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition"
+                    >
+                        <span class="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-900 text-white text-xs"></span>
+                        iOS
+                    </button>
+
+                    <button
+                        type="button"
+                        @click="setPreview('android')"
+                        :class="previewPlatform === 'android'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-300 bg-white text-gray-700'"
+                        class="flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition"
+                    >
+                        <span class="flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold">A</span>
+                        Android
+                    </button>
+                </div>
             </div>
 
             <div class="mt-5 text-xs text-gray-500 space-y-1">
